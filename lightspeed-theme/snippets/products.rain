@@ -1,0 +1,162 @@
+{% if theme.products_image_fit %}
+  {% set imageFit = '1' %}
+{% else %}
+  {% set imageFit = '2' %}
+{% endif %}
+
+{% if product.score %}
+{% set productScore = product.score * 10 | round %}
+{% else %}
+{% set productScore = '0' %}
+{% endif %}
+{% set roundHalf = productScore / 2 %}
+{% set stars = roundHalf | split('.') %}
+{% set fullStars = stars[0] %}
+{% set halfStars = 0 %}
+{% if stars[1] == 5 %}
+{% set halfStars = 1 %}
+{% else %}
+{% set halfStars = 0 %}
+{% endif  %}
+{% set emptyStars = (5 - (fullStars + halfStars)) %}
+
+{% if theme.products_show_quickview %}
+{% include 'snippets/quickview.rain' %}
+{% endif %}
+
+{% if collection.mode == 'list' %}
+{% include 'snippets/products-list.rain' %}
+{% else %}
+<div class="product inf-product {{ productCol }}{% if theme.products_second_image %} show-second{% endif %}" data-url="{{ product.url | url }}" data-img-settings="{{ theme.products_image_ratio }}x{{ imageFit }}" data-id="{{ product.id }}" data-inf-id="inf_id_here">
+  <div class="product-inner {{ theme.products_border }}{% if theme.products_gray_image %} img-gray{% endif %}{% if not theme.products_inner_spacing %} no-padding{% endif %}">
+  
+  
+  <div class="image-wrap">
+
+    {% spaceless %}
+    <div class="product-labels">
+      {% if product.id in (newest | keys) %}
+      <div class="product-label new">
+        {{ 'New' | t }}
+      </div>
+      {% endif %}
+        <div class="product-label sale{% if theme.products_show_percentage %} percentage{% endif %}">
+          {% if product.price.price_old %}
+          {% if theme.products_show_percentage %}
+          {{ (((product.price.price - product.price.price_old)/product.price.price_old)*100) | round(0) }}%
+          {% else %}
+          sale
+          {% endif %}
+          {% endif %}
+        </div>
+    </div>
+    {% endspaceless %}
+    
+    
+    {% if theme.products_show_wishlist and theme.show_wishlist %}
+    <div class="wishlist-btn">
+      <form>
+        {% if request.ssl and page.account %}
+      	<a href="javascript:;" class="add-to-wishlist" data-url="{{ ('account/wishlistAdd/' ~ product.id ~ '?variant_id=' ~ product.vid) | url }}" data-infinite-wishlist-jquery=""><i class="fa fa-heart-o"></i></a>
+        {% elseif page.account and not request.ssl %}
+        <a href="{{ ('account/wishlistAdd/' ~ product.id ~ '?variant_id=' ~ product.vid) | url }}" data-infinite-wishlist-href=""><i class="fa fa-heart-o"></i></a>
+        {% else %}
+        <a href="#login-popup" data-fancybox><i class="fa fa-heart-o"></i></a>
+        {% endif %}
+      </form>
+    </div>
+    {% endif %}
+    
+    {% if theme.products_show_quickview %}
+    <div class="quickview-button hidden-md hidden-sm hidden-xs">
+    	<a class="btn" href="javascript:;" data-product-url="{{ product.url | url }}" data-infinite-quickview-button>Quickview</a>
+      <a class="open-link hidden" href="#{{ productType }}{{ product.id }}" data-fancybox data-infinite-quickview-link>test</a>
+    </div>
+    {% endif %}
+    
+    <a href="{{ product.url | url }}" title="{{ product.fulltitle }}" data-infinite-product-url>
+      <span class="img-wrap">
+      {% if product.image %}
+      <img src="{{ product.image | url_image((theme.products_image_ratio~'x'~imageFit), product.fulltitle) }}" alt="{{ product.fulltitle }}" title="{{ product.fulltitle }}" data-infinite-product-image/>
+      {% else %}
+     <img src="{{ 'product-placeholder.png' | url_asset }}" alt="{{ product.title }}" title="{{ product.title }}" data-infinite-product-image/>
+      {% endif %}
+      </span>
+    </a>
+    
+  </div>
+  
+  
+  <div class="info{% if theme.products_center_info %} text-center{% endif %}">
+    
+    {% if brandsActive %}
+    <div class="product-brand" data-infinite-product-brand>{{ product.brand.title }}</div>
+    {% endif %}
+    
+    <a href="{{ product.url | url }}" title="{{ product.fulltitle }}" class="title title-font {{ theme.products_title_lines }}" data-infinite-product-title>{{ product.title }}</a>
+    
+    
+    {% if theme.products_show_stars  %}
+    {% spaceless %}
+   <!-- <div class="product-stars{% if theme.yotpo_id %} yotpo-stars{% endif %}">
+      {% if theme.yotpo_id %} 
+      <div class="stars" data-url="https://api.yotpo.com/products/{{ theme.yotpo_id }}/{{ product.id }}/bottomline" data-infinite-product-yotpo>
+      {% for i in 1..5 %}
+      	<i class="fa fa-star-o yellow"></i>
+      {% endfor %}
+      </div>
+      {#
+      <div class="yotpo bottomLine html_content" data-appkey="{{ theme.yotpo_id }}" data-domain="{{ shop.domain }}" data-product-id="{{ product.id }}" data-product-models="{{ product.id }}" data-name="{{ product.title }}" data-url="{{ product.url | url }}" data-image-url="{{ product.image | url_image }}" data-description="{{ product.description }}" data-bread-crumbs="{{ breadcrumb.title }}" data-infinite-product-yotpo></div>
+      #}
+      {% else %}
+      <div class="stars" data-infinite-product-normal-stars>
+      {% if fullStars %}
+    	{% for i in 1..fullStars %}
+      <i class="fa fa-star yellow"></i>
+      {% endfor %}
+      {% endif %}
+      {% if halfStars %}
+      {% for i in 1..halfStars %}
+      <i class="fa fa-star-half-o yellow"></i>
+      {% endfor %}
+      {% endif %}
+      {% if emptyStars %}
+      {% for i in 1..emptyStars %}
+      <i class="fa fa-star-o yellow"></i>
+      {% endfor %}
+      {% endif %}
+      </div>
+      {% endif %}
+    </div> -->
+    {% endspaceless %}
+    {% endif %}
+    
+    {% if theme.products_show_description %}
+    <div class="description {{ theme.products_description_lines }}" data-infinite-product-description>
+      {{ product.description }}
+    </div>
+    {% endif %}
+    
+    <div class="price">      
+      
+      <span class="old-price"><span class="price-inner" data-infinite-product-price-old>{% if product.price.price_old %}{{ product.price.price_old | money }}{% endif %}</span>{% if shop.settings.legal.mode == 'strict' %} <small>*</small>{% endif %}</span>
+      <span class="new-price"><span class="price-inner" data-infinite-product-price-new>{{ product.price.price | money }}</span>{% if shop.settings.legal.mode == 'strict' %} <small>*</small>{% endif %}</span>
+      {% if shop.settings.legal.mode == 'strict' %}
+      <small class="srp">{{ 'SRP' | t }}</small>
+      {% endif %}
+      {% if shop.b2b %}<div class="inc-price" data-infinite-product-price-incl>({{ product.price.price_incl | money }} {{ 'Incl. VAT' | t }})</div>{% endif %}
+      {% if shop.settings.price_per_unit %}
+      <div class="unit-price">{% if product.unit %}{{ 'Unit price' | t }}: <span data-infinite-product-price-unit>{{ product.unit.price | money }}</span> / <span>{{ product.unit.unit }}<span>{% endif %}</div>
+      {% endif %}
+      {% if shop.settings.legal.mode == 'strict' %}
+      <div class="legal">
+      {% if shop.b2b %}{{ 'Excl. VAT' | t }}{% else %}{{ 'Incl. VAT' | t }}{% endif %} {{ 'Excl. $1' | t('<a href="' ~ 'service/shipping-returns' | url ~ '" style="color: inherit;">' ~ 'Shipping costs' | t ~ '</a>') | raw }}  
+      </div>
+      {% endif %} 
+    </div>
+    
+  </div>
+     
+  </div>
+</div>
+{% endif %}

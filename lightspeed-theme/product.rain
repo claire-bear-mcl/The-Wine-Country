@@ -1,1 +1,606 @@
+{% if product.score %}
+{% set productScore = product.score * 10 | round %}
+{% else %}
+{% set productScore = '0' %}
+{% endif %}
+{% set roundHalf = productScore / 2 %}
+{% set stars = roundHalf | split('.') %}
+{% set fullStars = stars[0] %}
+{% set halfStars = 0 %}
+{% if stars[1] == 5 %}
+{% set halfStars = 1 %}
+{% else %}
+{% set halfStars = 0 %}
+{% endif  %}
+{% set emptyStars = (5 - (fullStars + halfStars)) %}
 
+{% if theme.products_image_fit %}
+  {% set imageFit = '1' %}
+{% else %}
+  {% set imageFit = '2' %}
+{% endif %}
+{% set sizes = theme.products_image_ratio | split('x') %}
+{% set length = sizes[0] * 2.5 %}
+{% set height = sizes[1] * 2.5 %}
+{% set productpage_image_ratio = (length~'x'~height) %}
+
+
+{% set shortTitle = 0 %}
+{% for cartproduct in page.cart.products %}
+{% if product.id == cartproduct.id %}
+{% set shortTitle = cartproduct.fulltitle %}
+{% endif %}
+{% endfor %}
+
+{% if (("'$1' was added to your shopping cart." | t(shortTitle)) == page.messages.success[0]) and theme.show_product_popup %}
+{% include 'snippets/popup-add-cart.rain' %}
+{% endif %}
+
+<div id="share-popup">
+  <div class="title-wrap">
+    <div class="title title-font">{{ 'Share' | t }}</div>
+    <div class="subtitle">{{ 'Share this product' | t }}</div>
+  </div>
+  {% spaceless %}
+  <ul>
+  	<li><a href="https://www.facebook.com/sharer/sharer.php?u={{ product.url | url }}" class="social facebook" target="_blank"><i class="fa fa-facebook"></i></a></li>
+  	<li><a href="https://twitter.com/home?status={{ product.title }}%20-%20{{ product.url }}" class="social twitter" target="_blank"><i class="fa fa-twitter"></i></a></li>
+  	<li><a href="https://pinterest.com/pin/create/button/?url={{ product.url | url }}&media={{ product.image | url_image }}&description={{ product.description }}" class="social pinterest" target="_blank"><i class="fa fa-pinterest"></i></a></li>
+  </ul>
+  {% endspaceless %}
+</div>
+
+<div id="review-popup">
+  <div class="title-wrap">
+    <div class="title title-font">{{ 'Add your review' | t }}</div>
+    <div class="subtitle">{{ 'Review $1' | t(product.title) }}</div>
+  </div>
+  <form action="{{ ('account/reviewPost/'~product.id) | url }}" method="post">
+  	<input type="hidden" name="key" value="{{ page.key }}">
+    <input type="text" name="name" value="" placeholder="{{ 'Name' | t }}" class="required">
+    <select id="gui-form-score" name="score">
+      <option value="1">1 {{ 'Star' | t }}</option>
+      <option value="2">2 {{ 'Stars' | t }}</option>
+      <option value="3">3 {{ 'Stars' | t }}</option>
+      <option value="4">4 {{ 'Stars' | t }}</option>
+      <option value="5" selected="selected">5 {{ 'Stars' | t }}</option>
+  	</select>
+    <textarea name="review" placeholder="{{ 'Review' | t }}" class="required"></textarea>
+    <div class="button">
+    	<a class="btn submit-form" href="javascript:;">{{ 'Save' | t }}</a>
+    </div>
+  </form>
+</div>
+
+<div id="productpage">
+  <div class="container-wide">
+    
+  	<div class="breadcrumbs">
+      <a href="{{ '' | url }}" title="{{ 'Home' | t }}">{{ 'Home' | t }}</a>
+      {% for breadcrumb in page.breadcrumbs %}
+     	<i class="fa fa-angle-right"></i><a{% if loop.last %} class="last"{% endif %} href="{{ breadcrumb.url | url }}">{{ breadcrumb.title }}</a>
+      {% endfor %}
+    </div>
+    
+    <div class="row">
+      
+      <div class="productpage-col{% if theme.show_usp_productpage %} with-usp{% endif %}">
+      	<div class="row">
+        
+          <div class="col-sm-6 col-md-5 col-lg-5">
+            <div class="product-images-block">
+              <div id="product-images" class="owl-carousel owl-theme{% if theme.product_border_product_image %} with-border{% endif %}{% if theme.product_image_background_gray %} gray-bg{% endif %}">
+                {% for image in product.images %}
+                <div class="item">
+                  <a href="{{ image | url_image() }}" data-fancybox="product-images2">
+                    <div class="image">
+                        <img src="{{ image | url_image((productpage_image_ratio~'x'~imageFit), product.fulltitle) }}" alt="{{ product.fulltitle }}">
+                    </div>
+                  </a>
+                  {% spaceless %}
+                  <ul class="product-actions">
+                    <li><a href="{{ image | url_image() }}" data-fancybox="product-images" data-toggle="tooltip" data-placement="top" title="Zoom"><i class="fa fa-arrows-alt"></i></a></li>
+                    {% if theme.show_compare %}
+                    <li><a href="{{ ('compare/add/' ~ product.vid ~ '/') | url }}" data-toggle="tooltip" data-placement="top" title="{{ 'Compare products' | t }}"><i class="fa fa-exchange"></i></a></li>
+                    {% endif %}
+                    <li><a href="#share-popup" data-fancybox data-toggle="tooltip" data-placement="top" title="{{ 'Share this product' | t }}"><i class="fa fa-share-alt"></i></a></li>
+                    {% if product.data_03 %}
+                    <li class="video"><a href="{{ product.data_03 }}" data-fancybox data-toggle="tooltip" data-placement="top" title="{{ 'Product video' | t }}"><i class="fa fa-play-circle"></i></a></li>
+                    {% endif %}
+                  </ul>
+                  {% endspaceless %} 
+                </div>
+                {% endfor %}
+              </div>
+
+              <div class="thumbs-row row">
+                <div id="product-thumbs" class="owl-carousel owl-theme{% if theme.product_border_product_image %} with-border{% endif %}{% if theme.product_image_background_gray %} gray-bg{% endif %} hidden-xs{% if product.images | length < 5 %} no-arrows{% endif %}">
+                  {% for image in product.images %}
+                  <div class="item">
+                    <div class="thumb">
+                      <div class="thumb-inner">
+                        <img src="{{ image | url_image((theme.products_image_ratio~'x'~imageFit), product.fulltitle) }}" alt="{{ product.fulltitle }}">
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+
+            </div> 	
+          </div>
+
+          <div class="col-sm-6 col-md-7 col-lg-7">
+            <div class="product-info main-product-info{% if theme.show_usp_productpage %} with-usp{% endif %}">
+
+              <div class="top-info">
+                {% if product.brand and theme.product_show_brand %}
+                  <div class="product-brand"><a href="{{ product.brand.url | url }}">{{ product.brand.title }}</a></div>
+                {% endif  %}
+                <h1 class="product-title">{{ product.title }}</h1>
+
+                {% if theme.product_show_reviews_and_stars or product.code %}
+                <div class="stars-code">
+                  <div class="align">
+                    {% if theme.product_show_reviews_and_stars %}
+                    <div class="align-bottom">
+                    {% spaceless %}
+                                         
+                   <!-- <div class="product-stars">
+                      {% if theme.yotpo_id %}
+                      <div class="yotpo bottomLine html_content" data-appkey="{{ theme.yotpo_id }}" data-domain="{{ shop.domain }}" data-product-id="{{ product.id }}" data-product-models="{{ product.id }}" data-name="{{ product.title }}" data-url="{{ product.url | url }}" data-image-url="{{ product.image | url_image }}" data-description="{{ product.description }}" data-bread-crumbs="{{ breadcrumb.title }}"></div>
+                      {% else %}
+                      <div class="stars">
+                      {% if fullStars %}
+                      {% for i in 1..fullStars %}
+                      <i class="fa fa-star yellow"></i>
+                      {% endfor %}
+                      {% endif %}
+                      {% if halfStars %}
+                      {% for i in 1..halfStars %}
+                      <i class="fa fa-star-half-o yellow"></i>
+                      {% endfor %}
+                      {% endif %}
+                      {% if emptyStars %}
+                      {% for i in 1..emptyStars %}
+                      <i class="fa fa-star-o yellow"></i>
+                      {% endfor %}
+                      {% endif %}
+                      </div> -->
+                      <div class="text">{{ product.reviews | length }} {{ 'Reviews' | t | lower }} - <a href="#review-popup" data-fancybox>{{ 'Add your review' | t | lower }}</a></div>
+                      {% endif %}
+                    </div>
+                      
+                    {% endspaceless %}
+                    </div>
+                    {% endif %}
+                    {% if product.code %}
+                    <div class="align-bottom{% if theme.product_show_reviews_and_stars %} text-right{% endif %} hidden-xs">
+                      <div class="product-code"><span class="title">{{ 'Article code' | t }}</span> {{ product.code }}</div>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+
+
+              <div class="price-stock">
+                <div class="align">
+
+                  <div class="price align-bottom">      
+                    {% if product.price.price_old %}
+                    <span class="old-price">{{ product.price.price_old | money }}{% if shop.settings.legal.mode == 'strict' %} <small>*</small>{% endif %}</span>
+                    {% endif %}  
+                    <span class="new-price">{{ product.price.price | money }}{% if shop.settings.legal.mode == 'strict' %} <small>*</small>{% endif %}</span>
+                    {% if shop.settings.legal.mode == 'strict' %}
+                    <small class="srp">{{ 'SRP' | t }}</small>
+                    {% endif %}
+                    {% if shop.b2b %}<div class="inc-price">({{ product.price.price_incl | money }} {{ 'Incl. VAT' | t }})</div>{% endif %}
+                    {% if product.unit and shop.settings.price_per_unit %}<div class="unit-price">{{ 'Unit price' | t }}: {{ product.unit.price | money }} / {{ product.unit.unit }}</div>{% endif %}
+                    {% if shop.settings.legal.mode == 'strict' %}
+                    <div class="legal">
+                    * {% if shop.b2b %}{{ 'Excl. VAT' | t }}{% else %}{{ 'Incl. VAT' | t }}{% endif %} {{ 'Excl. $1' | t('<a href="' ~ 'service/shipping-returns' | url ~ '" style="color: inherit;">' ~ 'Shipping costs' | t ~ '</a>') | raw }}  
+                    </div>
+                    {% endif %} 
+                  </div>
+									
+                  {% if theme.product_show_stock %}
+                  <div class="stock align-bottom text-right">
+                    <div class="stock">
+                      {% if product.stock.available and product.stock.level != 0 %}
+                      <div class="green"><i class="fa fa-check"></i>{% if theme.product_show_stock_level %}{{ product.stock.level }}{% endif %} {{ 'In stock' | t | lower }}</div>
+                      {% elseif product.stock.available and product.stock.level == 0 %}
+                      <div class="orange">{{ 'Out of stock' | t | lower }}</div>
+                      {% else %}
+                      <div class="red"><i class="fa fa-times"></i>{{ 'Out of stock' | t | lower }}</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endif %}
+
+                </div>
+              </div>
+
+              <div class="product-description">
+                {{ product.description }}
+              </div>
+
+              {% if product.stock.delivery and product.stock.available %}
+              <div class="product-delivery{% if product.stock.on_stock %} green{% else %} orange{% endif %}">
+                <i class="fa fa-truck"></i>{{ product.stock.delivery.title }}
+              </div>
+              {% endif %}
+
+              {% if (product.discounts or product.discount_rules) %}
+              <div class="discounts">  
+                <ul>
+                  {% if product.discounts %}
+                  {% for discount in product.discounts %}
+                  <li>
+                    {{ ('Buy $1 for $2 each and save $3' | t (''~discount.quantity~'', '<span>'~(discount.price | money)~'</span>', '<span>'~(discount.percentage | percentage)~'</span>' )) | raw }}
+                    {% if discount.unit and shop.settings.legal.mode == 'strict' %}
+                    ({{ discount.unit.price | money }} / {{ discount.unit.unit }})
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                  {% endif %}
+
+                  {% if product.discount_rules %}
+                  {% for discount_rule in product.discount_rules %}
+                  <li>
+                    <strong>{{ discount_rule }}</strong>
+                  </li>
+                  {% endfor %}
+                  {% endif %}
+                </ul>
+              </div>
+              {% endif %}
+
+              <form action="{{ ('cart/add/' ~ product.vid) | url }}" id="product_configure_form" method="post">
+                {% if product.options or product.variants or product.custom %}
+                <div class="product-option">
+                    {{ product | html_product_configure | raw }}
+                </div>
+                {% else %}
+                  <input type="hidden" name="bundle_id" id="product_configure_bundle_id" value="">
+                {% endif %}
+
+                {% if product.stock.available %}
+                {% spaceless %}
+                
+                {% if theme.show_order_countdown %}
+               	<div class="order-countdown title-font">
+                  <div class="align">
+                    <div class="align-middle icon">
+                  		<i class="fa fa-car"></i>
+                    </div>
+                    <div class="align-middle text">
+                      {{ 'Ordered before $1, delivered tomorrow' | t((theme.show_countdown_timer_till~':00')) }}.<span class="countdown hidden"> {{ 'You still have $1 hours to complete your order' | t('<span class="time">00:00:00</span>') | raw }}.
+                    </div>
+                  </div>
+                </div>
+               	{% endif %}
+                
+                <div class="cart">
+                  <div class="input-wrap">
+                   <input type="text" name="quantity" value="{{ product.quantity }}" />
+                    <div class="change">
+                      <a href="javascript:;" onclick="updateQuantity('up', $(this));" class="up">+</a>
+                      <a href="javascript:;" onclick="updateQuantity('down', $(this));" class="down">-</a>
+                    </div>
+                  </div>  
+                  <a href="javascript:;" onclick="$('#product_configure_form').submit();" class="btn add-cart" title="{{ 'Add to cart' | t }}">{{ 'Add to cart' | t }}</a>
+                  {% if theme.show_wishlist %}
+                  <a href="{{ ('account/wishlistAdd/' ~ product.id ~ '?variant_id=' ~ product.vid) | url }}" class="btn gray add-wishlist" title="{{ 'Add to wishlist' | t }}">
+                    <span class="{#hidden-md hidden-lg#}"><i class="fa fa-heart-o"></i></span>
+                    {#<span class="hidden-sm hidden-xs">{{ 'Add to wishlist' | t }}</span>#}
+                  </a>
+                  {% endif %}
+                </div>
+                
+                          
+                
+                {% endspaceless %}                
+                {% endif %}
+
+              </form>
+              
+              {% if theme.show_payments_productpage %}
+              {% spaceless %}
+              <div class="product-payments">
+              	{% for payment in shop.payments | keys %}
+                <div class="payment">
+                  <a href="{{ 'service/payment-methods' | url }}" title="{{ 'Payment methods' | t }}">
+                    <img src="{{ ((payment~'.png') | replace({'_': '-'})) | url_asset }}" alt="{{ payment.title }}" />
+                  </a>
+                </div>
+                {% endfor %}
+              </div>
+              {% endspaceless %}
+              {% endif %}
+							
+                
+                  <div class="product-content">
+                     <div class="titles-box">
+                      <div class="container-wide">
+                        <div class="titles row">
+                          <div class="{% if product.specs %}col-md-6{% else %}col-xs-12{% endif %}">
+                            <div class="title title-font">
+                              {{ 'Description' | t }}
+                            </div>
+                          </div>
+                          {% if product.specs %}
+                          <div class="col-md-5 col-md-offset-1 hidden-sm hidden-xs">
+                            <div class="title title-font">
+                              {{ 'Specifications' | t }}
+                            </div>  
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="container-wide">
+                        <div class="row">
+                          <div class="{% if product.specs %}col-md-6{% else %}col-xs-12{% endif %}">
+                            <div class="page">
+                              {{ product.content | raw }}
+                            </div>
+                          </div>
+                          {% if product.specs %}
+                          <div class="col-md-5 col-md-offset-1">
+                            {% if product.specs %}
+                            <div class="page specs">
+                              <table>
+                                {% for spec in product.specs %}
+                                <tr>
+                                  <td class="spec-title"><strong>{{ spec.title }} </strong></td>
+                                  <td>{{ spec.value }}</td>
+                                </tr>
+                                {% endfor %}
+                              </table>
+                            </div>
+                            {% endif %}
+                          </div>
+                          {% endif %}
+                        </div>
+                      </div>
+
+                  </div>
+                
+            </div>
+          </div>
+        
+      	</div>
+      </div>
+      
+      {% if theme.show_usp_productpage %}
+      <div class="productusp-col">
+        <div class="product-usp">
+          <div class="usp-title title-font">{{ shop.title }}<span class="dot">.</span></div>
+          <ul>
+            <li class="align">
+              <span class="icon align-top"><i class="fa {{ theme.productpage_usp_1_icon }}"></i></span>
+              <span class="text align-middle">
+                <div class="title title-font">{{ 'productpage_usp_1_title' | t }}</div> 
+                <div class="content">{{ 'productpage_usp_1_text' | t }}</div>
+              </span>
+            </li>
+            <li class="align">
+              <span class="icon align-top"><i class="fa {{ theme.productpage_usp_2_icon }}"></i></span>
+              <span class="text align-middle">
+                <div class="title title-font">{{ 'productpage_usp_2_title' | t }}</div> 
+                <div class="content">{{ 'productpage_usp_2_text' | t }}</div>
+              </span>
+            </li>
+            <div class="clearfix visible-md"></div>
+            <li class="align">
+              <span class="icon align-top"><i class="fa {{ theme.productpage_usp_3_icon }}"></i></span>
+              <span class="text align-middle">
+                <div class="title title-font">{{ 'productpage_usp_3_title' | t }}</div> 
+                <div class="content">{{ 'productpage_usp_3_text' | t }}</div>
+              </span>
+            </li>
+            <li class="align">
+              <span class="icon align-top"><i class="fa {{ theme.productpage_usp_4_icon }}"></i></span>
+              <span class="text align-middle">
+                <div class="title title-font">{{ 'productpage_usp_4_title' | t }}</div> 
+                <div class="content">{{ 'productpage_usp_4_text' | t }}</div>
+              </span>
+            </li>
+            <div class="clearfix visible-md"></div>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+      </div>
+      {% endif %}
+      
+    </div>
+    
+  </div>
+  
+
+  
+  {% if product.bundles %}
+  <div class="product-bundles">
+    <div class="container">
+    	<div class="title-featured text-center">
+        <div class="title-wrap">
+          <h2 class="title">{{ 'Bundle products' | t }}</h2>
+          {% if theme.activate_title_shadow %}<div class="shadow title-font">{{ 'Bundle products' | t }}</div>{% endif %}
+        </div>
+      </div>
+      
+      <div class="bundles">
+      	{% for bundle in product.bundles %}   
+        {% include 'snippets/bundleproduct.rain' %}
+        {% endfor %}
+      </div>
+      
+    </div>
+  </div>
+  {% endif %}
+  
+  {% if theme.product_show_reviews_and_stars %}
+  <div class="product-reviews{% if not product.related %} no-related-products{% endif %}">
+    <div class="container">
+      
+      <div class="title-featured text-center">
+        {% spaceless %}
+        <div class="stars-wrap">
+          <div class="stars">
+            {% if not theme.yotpo_id %}
+            {% if fullStars %}
+            {% for i in 1..fullStars %}
+            <i class="fa fa-star yellow"></i>
+            {% endfor %}
+            {% endif %}
+            {% if halfStars %}
+            {% for i in 1..halfStars %}
+            <i class="fa fa-star-half-o yellow"></i>
+            {% endfor %}
+            {% endif %}
+            {% if emptyStars %}
+            {% for i in 1..emptyStars %}
+            <i class="fa fa-star-o yellow"></i>
+            {% endfor %}
+            {% endif %}
+            {% endif %}
+          </div>
+        </div>
+        {% endspaceless %}
+        <div class="title-wrap">
+          {% if theme.yotpo_id %}
+          <h2 class="title">{{ 'Reviews' | t }}</h2>
+          {% if theme.activate_title_shadow %}<div class="shadow title-font">{{ 'Reviews' | t }}</div>{% endif %}
+          {% else %}
+        	<h2 class="title">{{ product.reviews | length }} {{ 'Reviews' | t | lower }}</h2>
+          {% if theme.activate_title_shadow %}<div class="shadow title-font">{{ product.reviews | length }} {{ 'Reviews' | t | lower }}</div>{% endif %}
+          {% endif %}
+        </div>
+        {% if not theme.yotpo_id %}
+        <div class="subtitle">{{ '$1 stars based on $2 reviews' | t(((product.score * 5) | round(1) | replace('.', ',')), (product.reviews | length)) }}</div>
+        <div class="button">
+          <a class="btn" href="#review-popup" data-fancybox>{{ 'Add your review' | t }}</a>
+        </div>
+        {% endif %}
+      </div>
+      
+      {% if theme.yotpo_id %}
+      <div class="yotpo yotpo-main-widget"
+        data-product-id="{{ product.id }}"
+        data-name="{{ product.title }}"
+        data-url="{{ product.url | url }}"
+        data-image-url="{{ product.image | url_image }}"
+        data-description="{{ product.description }}">
+      </div>
+      {% else %}
+      <div class="reviews row">
+        <div class="reviews-slider owl-carousel owl-theme">
+          {% for review in product.reviews %}
+          {% set productScore = review.score * 10 | round %}
+          {% set roundHalf = productScore / 2 %}
+          {% set stars = roundHalf | split('.') %}
+          {% set fullStars = stars[0] %}
+          {% set halfStars = 0 %}
+          {% if stars[1] == 5 %}
+          {% set halfStars = 1 %}
+          {% else %}
+          {% set halfStars = 0 %}
+          {% endif  %}
+          {% set emptyStars = (5 - (fullStars + halfStars)) %}
+          <div class="review col-xs-12">
+            <div class="review-inner">
+              <div class="date">{{ review.date | date('d M Y') }}</div>
+              <div class="title title-font">{{ review.name }}</div>
+              {% spaceless %}
+              <div class="stars-wrap">
+                <div class="stars">
+                  {% if fullStars %}
+                  {% for i in 1..fullStars %}
+                  <i class="fa fa-star yellow"></i>
+                  {% endfor %}
+                  {% endif %}
+                  {% if halfStars %}
+                  {% for i in 1..halfStars %}
+                  <i class="fa fa-star-half-o yellow"></i>
+                  {% endfor %}
+                  {% endif %}
+                  {% if emptyStars %}
+                  {% for i in 1..emptyStars %}
+                  <i class="fa fa-star-o yellow"></i>
+                  {% endfor %}
+                  {% endif %}
+                </div>
+              </div>
+              {% endspaceless %}
+              <div class="content">{{ review.content }}</div>
+            </div>
+          </div>
+          {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      
+      
+  	</div>
+  </div>
+  {% endif %}
+  
+  {% if product.related %}
+  <div class="related-products">
+    <div class="container-wide">
+    	
+    <div class="title-featured text-center">
+      <div class="title-wrap">
+        <h2 class="title">{{ 'Related products' | t }}</h2>
+        {% if theme.activate_title_shadow %}<div class="shadow title-font">{{ 'Related products' | t }}</div>{% endif %}
+      </div>
+    </div>
+      
+      <div class="row products">
+        <div class="related-products-slider owl-carousel owl-theme" data-tiles="{% if theme.products_big_tiles %}4|3|2|2{% else %}5|4|3|2{% endif %}" data-items="{{ product.related | length }}">
+          {% set productCol = 'col-xs-12' %}
+          {% set brandsActive = 0 %}
+          {% for product in product.related %}
+          {% if product.brand %}
+          {% set brandsActive = 1 %}
+          {% endif %}
+          {% endfor %}
+          {% for product in product.related %}
+            <div class="item">
+            	{% include 'snippets/products.rain' %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  {% endif %}
+  
+  {% if product.tags and theme.show_tags_productpage %}
+  {% spaceless %}
+  <div class="home-tags">
+    <div class="container">
+      <div class="title-featured text-center">
+        <div class="title-wrap">
+          <h2 class="title">{{ 'Tags' | t }}</h2>
+          {% if theme.activate_title_shadow %}<div class="shadow title-font">{{ 'Tags' | t }}</div>{% endif %}
+        </div>
+      </div>
+      <div class="tags text-center">
+        <ul>
+          {% for tag in product.tags %}
+          <li><a href="{{ tag.url | url }}">{{ tag.title }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endspaceless %}
+  {% endif %}
+  
+</div>
